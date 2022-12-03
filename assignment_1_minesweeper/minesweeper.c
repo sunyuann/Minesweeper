@@ -3,10 +3,6 @@
 //
 // This program was written by LUM SUN YUAN (z5289055)
 // on 18/03/2020
-//
-// Version 1.0.0 (2020-03-08): Assignment released.
-// Version 1.0.1 (2020-03-08): Fix punctuation in comment.
-// Version 1.0.2 (2020-03-08): Fix second line of header comment to say minesweeper.c
 
 #include <stdio.h>
 #include <stdlib.h>
