@@ -1,4 +1,4 @@
-# COMP1511-20T1-minesweeper
+# Minesweeper
 Minesweeper program in C that allows you to set mine locations and play minesweeper with added functionality.
 Added functionality includes:
   -Set number of mines
