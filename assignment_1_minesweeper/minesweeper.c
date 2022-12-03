@@ -1,0 +1,924 @@
+ // Assignment 1 20T1 COMP1511: Minesweeper
+// minesweeper.c
+//
+// This program was written by LUM SUN YUAN (z5289055)
+// on 18/03/2020
+//
+// Version 1.0.0 (2020-03-08): Assignment released.
+// Version 1.0.1 (2020-03-08): Fix punctuation in comment.
+// Version 1.0.2 (2020-03-08): Fix second line of header comment to say minesweeper.c
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// Possible square states.
+#define VISIBLE_SAFE    0
+#define HIDDEN_SAFE     1
+#define HIDDEN_MINE     2
+
+// The size of the starting grid.
+#define SIZE 8
+
+// The possible command codes.
+#define DETECT_ROW              1
+#define DETECT_COL              2
+#define DETECT_SQUARE           3
+#define REVEAL_SQUARE           4
+#define GAMEPLAY_MODE           5
+#define DEBUG_MODE              6
+#define REVEAL_RADIAL           7
+
+// Add any extra #defines here.
+
+// Place your function prototyes here.
+void initialise_field(int minefield[SIZE][SIZE]);
+void print_debug_minefield(int minefield[SIZE][SIZE]);
+int detectMinesRow(int minefield[SIZE][SIZE], int row);
+int detectMinesCol(int minefield[SIZE][SIZE], int column);
+int detectMinesSquare (int minefield[SIZE][SIZE], int row, int column, int squareSize);
+int revealSquare(int minefield[SIZE][SIZE], int row, int column);
+void gameplayMode(int minefield[SIZE][SIZE], int endGame);
+int revealRadial(int minefield[SIZE][SIZE], int row, int column);
+void safeFirstTurn(int minefield[SIZE][SIZE], int row, int column);
+
+int main(void) {
+    // Initialise minefield and welcome user to Minesweeper program
+    int minefield[SIZE][SIZE];
+    initialise_field(minefield);
+    printf("Welcome to minesweeper!\n");
+    printf("How many mines? ");
+    // Scan in the number of pairs of mines.
+    int numMines;
+    scanf("%d", &numMines);
+    
+    // TODO: Scan in the pairs of mines and place them on the grid.
+    printf("Enter pairs:\n");
+    int counterNumMines = 0;
+    while (counterNumMines < numMines) { // scan selected number of mines
+        int row;
+        int column;
+        
+        //scan coordinates of mines
+        scanf("%d %d", &row, &column);
+        
+        //set conditions to not place out of range mines in minefield
+        if (row < SIZE && row >= 0 && column >= 0 && column < SIZE) {
+            // place mines within range in minefield
+            minefield[row][column] = HIDDEN_MINE;
+        }
+        
+        counterNumMines++;
+    }
+
+    //print "Game Started" and minefield once mines are placed 
+    printf("Game Started\n");
+    print_debug_minefield(minefield);
+
+    // TODO: Scan in commands to play the game until the game ends.
+    // A game ends when the player wins, loses, or enters EOF (Ctrl+D).
+    // You should display the minefield after each command has been processed.
+    
+    int numHints = 0;
+    int endGame = 0;
+    int turnNumber = 1;
+    int functionNum;
+    int functionInputOne;
+    int functionInputTwo;
+    int functionInputThree;
+    
+    // return value to determine which map to print
+    // (debug mode or gameplay mode)
+    int mapType = 6;
+    
+    // read loop until game is won, game is lost or there is an EOF (ctrl + D)
+    // scan for function type and make sure it is a valid input
+    while (endGame == 0 && scanf("%d", &functionNum) == 1) {
+        if (functionNum == DETECT_ROW) { // function to detect mines in row
+            // scan which row is selected
+            scanf(" %d", &functionInputOne);
+            if (numHints < 3) { // limit number of hints to 3 
+                // run detectMinesRow function
+                // obtain number of mines in selected row
+                int totalMinesRow = detectMinesRow(minefield
+                , functionInputOne);
+                // print to show number of mines in selected row
+                printf("There are %d mine(s) in row %d\n", 
+                totalMinesRow, functionInputOne);
+                // add 1 to hint counter every time this function runs
+                numHints++;
+            
+            } else { // if 3 hints already used, inform user
+                printf("Help already used\n");
+            }
+            
+            if (endGame == 0 && mapType == 5) {
+                // print smiley face if game is still running and 
+                // the map is in gameplay mode
+                printf("..\n");
+                printf("\\/\n");
+            }
+        }
+        
+        if (functionNum == DETECT_COL) { // function to detect mines in column
+            // scan which column is selected
+            scanf(" %d", &functionInputOne);
+            if (numHints < 3) { // limit number of hints to 3
+                // run detectMinesCol functionInputOne
+                // obtain number of mines in selected column
+                int totalMinesCol = detectMinesCol(minefield
+                , functionInputOne);
+                // print to show number of mines in selected column
+                printf("There are %d mine(s) in column %d\n",
+                totalMinesCol, functionInputOne);
+                // add 1 to hint counter every time this function runs
+                numHints++;
+            
+            } else { // if 3 hints already used, inform user
+                printf("Help already used\n");
+            }
+            
+            if (endGame == 0 && mapType == 5) {
+                // print smiley face if game is still running and
+                // the map is in gameplay mode
+                printf("..\n");
+                printf("\\/\n");
+            }
+        }
+        
+        if (functionNum == DETECT_SQUARE) { 
+            // function to detect mines in square
+            // scan row, column and size of square
+            scanf(" %d %d %d", &functionInputOne
+            , &functionInputTwo, &functionInputThree);
+            if (numHints < 3) { // limit number of hints to 3
+                // run detectMinesSquare function 
+                // obtain number of mines in selected square
+                int totalMinesSquare = detectMinesSquare(minefield, 
+                functionInputOne, functionInputTwo, functionInputThree);
+                // print to show number of mines in selected square 
+                printf("There are %d mine(s) in the ", totalMinesSquare);
+                printf("square centered at row %d, column %d of size %d\n",
+                functionInputOne, functionInputTwo, functionInputThree); 
+
+                // add 1 to hint counter every time this function runs
+                numHints++;
+        
+            } else { // if 3 hints already used, inform user
+                printf("Help already used\n");
+            }
+            
+            if (endGame == 0 && mapType == 5) {
+                // print smiley face is game is still running and
+                // map is still in gameplay mode
+                printf("..\n");
+                printf("\\/\n");
+            }
+        }
+        
+        if (functionNum == REVEAL_SQUARE) { 
+            // function to reveal squares in grid
+            // scan row and column of square
+            scanf(" %d %d", &functionInputOne, &functionInputTwo);
+            if (turnNumber == 1) { // if first reveal, apply safeFirstTurn
+                safeFirstTurn(minefield, functionInputOne, functionInputTwo);
+                revealSquare(minefield, functionInputOne, functionInputTwo);
+                turnNumber++;
+                if (endGame == 0 && mapType == 5) {
+                    // print smiley face if game is still running and
+                    // the map is in gameplay mode
+                    printf("..\n");
+                    printf("\\/\n");
+                }
+            } else if (turnNumber != 1) { 
+                // if not first reveal, apply revealSquare function
+                endGame = revealSquare(minefield, functionInputOne,
+                functionInputTwo);
+                         
+                if (endGame == 1 && mapType == 6) {
+                    // if game is lost in debug mode, print "Game over"
+                    printf("Game over\n");
+
+                } else if (endGame == 2 && mapType == 6) {
+                    // if game is won in debug mode, print "Game won!"
+                    printf("Game won!\n");
+
+                } else if (endGame == 1 && mapType == 5) {
+                    // if game is lost in gameplay mode,
+                    // print "Game over" and sad face
+                    printf("Game over\n");
+                    printf("xx\n");
+                    printf("/\\\n");
+
+                } else if (endGame == 2 && mapType == 5) {
+                    // if game is won in gameplay mode,
+                    // print "Game won!" and smiley face
+                    printf("Game won!\n");
+                    printf("..\n");
+                    printf("\\/\n");
+
+                } else if (endGame == 0 && mapType == 5) {
+                    // if game is still in progress in debug mode,
+                    // print smiley face
+                    printf("..\n");
+                    printf("\\/\n");
+                }
+            }
+        }
+        
+        if (functionNum == REVEAL_RADIAL) { 
+            // function to reveal radial in grid
+            // scan row and column of radial
+            scanf(" %d %d", &functionInputOne, &functionInputTwo);
+            if (turnNumber == 1) { // if first reveal, apply safeFirstTurn
+                safeFirstTurn(minefield, functionInputOne, functionInputTwo);
+                revealRadial(minefield, functionInputOne, functionInputTwo);
+                turnNumber++;
+                if (endGame == 0 && mapType == 5) {
+                    // print smiley face if game is still running and
+                    // the map is in gameplay mode
+                    printf("..\n");
+                    printf("\\/\n");
+                }
+            } else if (turnNumber != 1) {
+                // if not first reveal, apply revealRadial function
+                endGame = revealRadial(minefield, functionInputOne,
+                functionInputTwo);
+                
+                if (endGame == 1 && mapType == 6) {
+                    // if game is lost in debug mode, print "Game over"
+                    printf("Game over\n");
+
+                } else if (endGame == 2 && mapType == 6) {
+                    // if game is won in debug mode, print "Game won!"
+                    printf("Game won!\n");
+
+                } else if (endGame == 1 && mapType == 5) {
+                    // if game is lost in gameplay mode,
+                    // print "Game over" and sad face
+                    printf("Game over\n");
+                    printf("xx\n");
+                    printf("/\\\n");
+
+                } else if (endGame == 2 && mapType == 5) {
+                    // if game is won in gameplay mode,
+                    // print "Game won!" and smiley face
+                    printf("Game won!\n");
+                    printf("..\n");
+                    printf("\\/\n");
+
+                } else if (endGame == 0 && mapType == 5) {
+                    // if game is still in progress in debug mode,
+                    // print smiley face
+                    printf("..\n");
+                    printf("\\/\n");
+                }
+            }
+        }
+            
+        if (functionNum == GAMEPLAY_MODE) { 
+            // function to change print format to gameplay mode
+            // when function is first entered, inform user that 
+            // gameplay mode has been activated with a smiley face
+            printf("Gameplay mode activated\n");
+            printf("..\n");
+            printf("\\/\n");
+            // change mapType variable to gameplay mode number (GAMEPLAY_MODE)
+            mapType = GAMEPLAY_MODE;
+        }
+        
+                
+        if (functionNum == DEBUG_MODE) {
+            // function to change print format to debug mode
+            // when function is first entered, inform user that
+            // debug mode has been activated
+            printf("Debug mode activated\n");
+            // change mapType variable to debug mode number (DEBUG_MODE)
+            mapType = DEBUG_MODE;   
+        }
+        
+        if (mapType == DEBUG_MODE) {
+            // if mapType is DEBUG_MODE,
+            // print debug mode map after functions
+            print_debug_minefield(minefield);
+                
+        } else if (mapType == GAMEPLAY_MODE) {
+            // if mapType is GAMEPLAY_MODE,
+            // print gameplay mode map after functions
+            
+            if (endGame == 2 || endGame == 0) {
+                // if game is won or has not finished,
+                // print gameplay mode with covered mines
+                gameplayMode(minefield, 0);
+            
+            } else if (endGame == 1) {
+                // if game is lost,
+                // print gameplay mode with uncovered mines 
+                // to reveal location of mines 
+                gameplayMode(minefield, 1);
+            }
+        }
+    }    
+    return 0;
+}
+
+
+
+
+// Set the entire minefield to HIDDEN_SAFE.
+void initialise_field(int minefield[SIZE][SIZE]) {
+    int i = 0;
+    while (i < SIZE) {
+        int j = 0;
+        while (j < SIZE) {
+            minefield[i][j] = HIDDEN_SAFE;
+            j++;
+        }
+        i++;
+    }
+}
+
+// Print out the actual values of the minefield.
+void print_debug_minefield(int minefield[SIZE][SIZE]) {
+    int i = 0;
+    while (i < SIZE) {
+        int j = 0;
+        while (j < SIZE) {
+            printf("%d ", minefield[i][j]);
+            j++;
+        }
+        printf("\n");
+        i++;
+    }
+}
+
+// Detect the number of mines in selected row. (DETECT_ROW, Function 1)
+int detectMinesRow(int minefield[SIZE][SIZE], int row) {
+    int i = 0;
+    int totalMines = 0;
+    while (i < SIZE) { // counter to loop number of columns in selected row
+        // check columns in selected row for hidden mines
+        // add 1 to total mines variable every time a hidden mine is detected 
+        if (minefield[row][i] == HIDDEN_MINE) {
+            totalMines++;
+        }
+        i++;
+    }
+    return totalMines; 
+}
+    
+// Detect the number of mines in selected column. (DETECT_COL, Function 2)
+int detectMinesCol(int minefield[SIZE][SIZE], int column) {
+    int i = 0;
+    int totalMines = 0;
+    while (i < SIZE) { // counter to loop number of rows in selected column
+        // check row in selected column for hidden mines 
+        // add 1 to total mines variable every time a hidden mine is detected
+        if (minefield[i][column] == HIDDEN_MINE) {
+            totalMines++;
+        }
+        i++;
+    }
+    return totalMines; 
+}
+
+// Detect the number of mines in selected square. (DETECT_SQUARE, Function 3)
+int detectMinesSquare (int minefield[SIZE][SIZE], int row, int column, int squareSize) {
+    // calculate minimum row and maximum row within selected square range
+    int minimumRow = row - (squareSize / 2);
+    int maximumRow = row + (squareSize / 2);
+    int totalMines = 0;
+    
+    // if minimum row is out of the minefield range (< 0),
+    // set the minimum row back to the minimum row of the minefield (0).
+    if (minimumRow < 0) {
+        minimumRow = 0;
+    }
+    
+    // if maximum row is out of the minefield range (>= SIZE),
+    // set the maximum row back to maximum row of the minefield (SIZE - 1).
+    if (maximumRow >= SIZE) {
+        maximumRow = SIZE - 1;
+    }
+    
+    while (minimumRow <= maximumRow ) { 
+        // loop the number of rows in selected square
+        // calculate minimum column and maximum column 
+        // within selected square range
+        int minimumCol = column - (squareSize / 2);
+        int maximumCol = column + (squareSize / 2);
+        while (minimumCol <= maximumCol) {
+            // loop the number of columns in selected square
+            // if minimum column is out of minefield range (< 0),
+            // set the minimum row back to the 
+            // minimum column of the minefield (0).
+            if (minimumCol < 0) {
+                minimumCol = 0;
+            }
+            
+            // if maximum column is out of the minefield range (>= SIZE),
+            // set the maximum column back to the 
+            // maximum column of the minefield (SIZE - 1).
+            if (maximumCol >= SIZE) {
+                maximumCol = SIZE - 1;
+            }
+            
+            // add 1 to total mines variable every time
+            // a hidden mine is detected
+            if (minefield[minimumRow][minimumCol] == HIDDEN_MINE) {
+                totalMines++;
+            }
+            minimumCol++;
+        }
+        minimumRow++;
+    }
+    return totalMines;
+}
+
+// Reveal the number of mines in a square. (REVEAL_SQUARE, Function 4)
+// if selected square contains a mine then the game is lost
+// if selected square has adjacent mines then only reveal selected square
+// if selected square has no adjacent mines then reveal all of its 
+// adjacent squares
+// if all squares have been revealed except for hidden mines then game is won
+int revealSquare(int minefield[SIZE][SIZE], int row, int column) {
+    // use the detectMinesSquare function (function 3) to detect the number of
+    // mines in a 3x3 square around the selected square
+    int numMines = detectMinesSquare (minefield, row, column, 3);
+    
+    // if selected square contains a hidden mine,
+    // then the return value is 1 (game lost) 
+    if (minefield[row][column] == HIDDEN_MINE) {
+        return 1;
+    
+    } else if (numMines > 0 && numMines <= 9) {
+        // if selected square contains at least one adjacent mine,
+        // then change only the selected square to a visible safe square
+        minefield[row][column] = VISIBLE_SAFE;
+       
+    } else if (numMines == 0) {
+        // if selected square contains no adjacent mines and is not a mine, 
+        // change all adjacent mines to VISIBLE_SAFE.
+           
+        // calculate minimum row and maximum row
+        // within selected square range (3 x 3)
+        int minimumRow = row - 1;
+        int maximumRow = row + 1;
+        // if minimum row is out of minefield range (< 0),
+        // set the minimum row back to the 
+        // minimum row of the minefield (0). 
+        if (minimumRow < 0) {
+            minimumRow = 0;
+        }
+        // if maximum row is out of minefield range (>= SIZE),
+        // set the maximum row back to the 
+        // maximum row of the minefield (SIZE - 1).
+        if (maximumRow >= SIZE) {
+            maximumRow = SIZE - 1;
+        }
+ 
+        while (minimumRow <= maximumRow) {
+            // loop the number of rows in selected square
+            
+            // calculate minimum column and maximum column
+            // within selected square range
+            int minimumCol = column - 1;
+            int maximumCol = column + 1;
+            // if minimum column is out of minefield range (< 0),
+            // set the minimum column back to the 
+            // minimum column of the minefield (0).
+            if (minimumCol < 0) {
+                minimumCol = 0;
+            }
+            // if maximum column is out of minefield range (>= SIZE),
+            // set the maximum column back to the 
+            // maximum column of the minefield (SIZE - 1).
+            if (maximumCol >= SIZE) {
+                maximumCol = SIZE - 1;
+            }
+            
+            while (minimumCol <= maximumCol) {
+                // loop the number of columns in selected square
+                // change individual squares within the selected square range
+                // to VISIBLE_SAFE (0). 
+                minefield[minimumRow][minimumCol] = VISIBLE_SAFE;
+                minimumCol++;
+            }
+            minimumRow++;
+        }
+    }
+    
+    // count number of VISIBLE_SAFE and HIDDEN_MINE in the
+    // whole minefield array
+    int i = 0;
+    int totalVisibleSafe = 0;
+    int totalHiddenMine = 0;
+    while (i < SIZE) { // counter to loop number of rows in minefield 
+        int j = 0;
+        while (j < SIZE) { // counter to loop number of columns in minefield
+            if (minefield[i][j] == VISIBLE_SAFE) {
+                // if selected square is VISIBLE_SAFE,
+                // add one to the totalVisibleSafe variable
+                totalVisibleSafe++;
+            
+            } else if (minefield[i][j] == HIDDEN_MINE) {
+                // if selected square is HIDDEN_MINE,
+                // add one to the totalHiddenMine variable
+                totalHiddenMine++;
+            } 
+            j++;
+        } 
+        i++;
+    }
+    
+    // check and compare sum of VISIBLE_SAFE and HIDDEN_MINE in the array 
+    // to the total number of squares in the minefield array
+    if (totalVisibleSafe + totalHiddenMine == SIZE * SIZE) {
+        // if the sums add up,
+        // this means all the HIDDEN_SAFE has been revealed without losing
+        // the game, indicating that the game has been won,
+        // then the return value is 2 (game won)
+        return 2;
+    } else {
+        // if the sum does not add up,
+        // this means some of the HIDDEN_SAFE has yet to be revealed, 
+        // indicating that the game has not been won
+        // then the return value is 0 (continue game)
+        return 0;
+    }
+}
+
+// Function to activate gameplay mode (GAMEPLAY_MODE, Function 5)
+void gameplayMode(int minefield[SIZE][SIZE], int endGame) {
+    // print horizontal grid
+    // print column number grid
+    printf("    ");
+    int i = 0;
+    while (i < SIZE) {
+        printf("0%d ", i);
+        i++;
+    }
+    printf("\n");
+    
+    // print line with dashes below column number grid
+    printf("   -");
+    int j = 0;
+    while (j < SIZE) {
+        printf("---");
+        j++;
+    }
+    printf("\n");
+    
+    //print vertical grid 
+    int row = 0;
+    while (row < SIZE) { // loop number of rows in minefield
+        // print row number grid
+        printf("0%d |", row);
+        
+        int column = 0;
+        while (column < SIZE) { // loop number of columns in minefield
+        
+            // detect number of adjacent mines in selected square
+            int numMines = detectMinesSquare (minefield, row, column, 3);
+            
+            if (minefield[row][column] == HIDDEN_SAFE) { 
+                // change HIDDEN_SAFE in minefield to "##"
+                printf("##");
+            
+            } else if (minefield[row][column] == HIDDEN_MINE && 
+                endGame == 0) {
+                // change HIDDEN_MINE in minefield to "##" if game is not won
+                printf("##");
+            
+            } else if (minefield[row][column] == HIDDEN_MINE &&
+                endGame == 1) {
+                // change HIDDEN_MINE in minefield to "()" if game is lost
+                // reveal position of mines after game is lost
+                printf("()");
+         
+            } else if (minefield[row][column] == VISIBLE_SAFE) {
+                if (numMines == 0) {
+                    // if no adjacent mines, print space
+                    printf("  ");
+                } else if (numMines != 0) {
+                    // if there are adjacent mines,
+                    // print number of adjacent mines
+                    printf("0%d", numMines);
+                }
+            }
+            
+            if (column < SIZE - 1) {
+                // print space to separate columns with a spacing
+                printf(" ");
+            } else if (column == SIZE - 1) {
+                // print "|" after the last column 
+                printf("|\n");
+            }    
+            column++;
+        }
+        row++;
+    }
+    
+    // print line with dashes after the gameplay mode map has been printed
+    printf("   -");
+    int k = 0;
+    while (k < SIZE) {
+        printf("---");
+        k++;
+    }
+    printf("\n");
+}
+
+// Reveal the number of mines in a radial. (REVEAL_RADIAL, Function 7)
+// if selected square contains a mine then the game is lost.
+// if selected square has adjacent mines then only reveal selected square.
+// if selected square has no adjacent mines then reveal radial lines from the 
+// specific square at angles of 0, 45, 90, 135, 180, 225, 270 and 315 degrees.
+// radial lines should stop at a square with adjacent mines or a square
+// which is on an edge.
+// if all squares have been revealed except for hidden mines then game is won.
+int revealRadial(int minefield[SIZE][SIZE], int row, int column) {
+    // obtain returnValue from revealSquare function to check output
+    // (see if game won, game lost, or game is still ongoing)
+    int returnValue = revealSquare(minefield, row, column);
+    
+    // detect number of adjacent mines in selected square
+    int totalMinesSquare = detectMinesSquare(minefield, row, column, 3);
+    
+    // if there are no adjacent mines to selected square, 
+    // start revealing the radial
+    if (totalMinesSquare == 0) {
+        // while loop to print 315 degrees line
+        int i_315 = row + 1;
+        int counter_315 = 2;
+        int endLoop_315 = 0;
+        while (i_315 < SIZE && endLoop_315 == 0) {
+            int j_315 = column + 1;
+            while (j_315 < SIZE) {
+                // check adjacent mines of revealed square 
+                int totalMinesSquare_315 = detectMinesSquare(
+                minefield, i_315 , j_315 , 3);
+                if (i_315 + j_315 == row + column + counter_315) {
+                    if (totalMinesSquare_315 == 0) { 
+                        // if no adjacent mines, change next square in
+                        // radial line to VISIBLE_SAFE
+                        minefield[i_315][j_315] = VISIBLE_SAFE;
+                    } else {
+                        if (minefield[i_315][j_315] != HIDDEN_MINE) {
+                            // if there are adjacent mines,
+                            // change the next square in
+                            // radial line to VISIBLE_SAFE
+                            minefield[i_315][j_315] = VISIBLE_SAFE;
+                        }
+                        // then end the loop to stop printing the line
+                        endLoop_315 = 1;
+                    }
+                }
+                j_315++;
+            }
+            counter_315 = counter_315 + 2;
+            i_315++;    
+        } 
+                
+        // while loop to print 45 degrees line
+        int i_45 = row - 1;
+        int endLoop_45 = 0;
+        while (i_45 >= 0 && endLoop_45 == 0) {
+            int j_45 = column + 1;
+            while (j_45 < SIZE) {
+                // check adjacent mines of revealed square 
+                int totalMinesSquare_45 = detectMinesSquare(
+                minefield, i_45 , j_45 , 3);
+                if (i_45 + j_45 == row + column) {
+                    if (totalMinesSquare_45 == 0) { 
+                        // if no adjacent mines, change next square in
+                        // radial line to VISIBLE_SAFE
+                        minefield[i_45][j_45] = VISIBLE_SAFE;
+                    } else {
+                        if (minefield[i_45][j_45] != HIDDEN_MINE) {
+                            // if there are adjacent mines,
+                            // change the next square in
+                            // radial line to VISIBLE_SAFE
+                            minefield[i_45][j_45] = VISIBLE_SAFE;
+                        }
+                        // then end the loop to stop printing the line
+                        endLoop_45 = 1;
+                    }
+                }
+                j_45++;
+            }
+            i_45--;    
+        } 
+        
+        // while loop to print 135 degrees line
+        int i_135 = row - 1;
+        int counter_135 = -2;
+        int endLoop_135 = 0;
+        while (i_135 >= 0 && endLoop_135 == 0) {
+            int j_135 = column - 1;
+            while (j_135 >= 0) {
+                // check adjacent mines of revealed square 
+                int totalMinesSquare_135 = detectMinesSquare(
+                minefield, i_135 , j_135 , 3);
+                if (i_135 + j_135 == row + column + counter_135) {
+                    if (totalMinesSquare_135 == 0) { 
+                        // if no adjacent mines, change next square in
+                        // radial line to VISIBLE_SAFE
+                        minefield[i_135][j_135] = VISIBLE_SAFE;
+                    } else {
+                        if (minefield[i_135][j_135] != HIDDEN_MINE) {
+                            // if there are adjacent mines,
+                            // change the next square in
+                            // radial line to VISIBLE_SAFE
+                            minefield[i_135][j_135] = VISIBLE_SAFE;
+                        }
+                        // then end the loop to stop printing the line
+                        endLoop_135 = 1;
+                    }
+                }
+                j_135--;
+            }
+            counter_135 = counter_135 - 2;
+            i_135--;    
+        }
+        
+        // while loop to print 225 degrees line
+        int i_225 = row + 1;
+        int endLoop_225 = 0;
+        while (i_225 < SIZE && endLoop_225 == 0) {
+            int j_225 = column - 1;
+            while (j_225 >= 0) {
+                // check adjacent mines of revealed square 
+                int totalMinesSquare_225 = detectMinesSquare(
+                minefield, i_225 , j_225 , 3);
+                if (i_225 + j_225 == row + column) {
+                    if (totalMinesSquare_225 == 0) { 
+                        // if no adjacent mines, change next square in
+                        // radial line to VISIBLE_SAFE
+                        minefield[i_225][j_225] = VISIBLE_SAFE;
+                    } else {
+                        if (minefield[i_225][j_225] != HIDDEN_MINE) {
+                            // if there are adjacent mines,
+                            // change the next square in
+                            // radial line to VISIBLE_SAFE
+                            minefield[i_225][j_225] = VISIBLE_SAFE;
+                        }
+                        // then end the loop to stop printing the line
+                        endLoop_225 = 1;
+                    }
+                }
+                j_225--;
+            }
+            i_225++;    
+        }
+        
+        // while loop to print 0 degrees line
+        int j_0 = column + 1;
+        int counter_0 = 1;
+        int endLoop_0 = 0;
+        while (j_0 < SIZE && endLoop_0 == 0) {
+            // check adjacent mines of revealed square 
+            int totalMinesSquare_0 = detectMinesSquare(
+            minefield, row , j_0 , 3);
+            if (row + j_0 == row + column + counter_0) {
+                if (totalMinesSquare_0 == 0) { 
+                    // if no adjacent mines, change next square in
+                    // radial line to VISIBLE_SAFE
+                    minefield[row][j_0] = VISIBLE_SAFE;
+                } else {
+                    if (minefield[row][j_0] != HIDDEN_MINE) {
+                        // if there are adjacent mines,
+                        // change the next square in
+                        // radial line to VISIBLE_SAFE
+                        minefield[row][j_0] = VISIBLE_SAFE;
+                    }
+                    // then end the loop to stop printing the line
+                    endLoop_0 = 1;
+                }
+            }
+            counter_0 = counter_0 + 1; 
+            j_0++;  
+        }
+        
+        // while loop to print 180 degrees line
+        int j_180 = column - 1;
+        int counter_180 = -1;
+        int endLoop_180 = 0;
+        while (j_180 >= 0 && endLoop_180 == 0) {
+            // check adjacent mines of revealed square 
+            int totalMinesSquare_180 = detectMinesSquare(
+            minefield, row , j_180 , 3);
+            if (row + j_180 == row + column + counter_180) {
+                if (totalMinesSquare_180 == 0) { 
+                    // if no adjacent mines, change next square in
+                    // radial line to VISIBLE_SAFE
+                    minefield[row][j_180] = VISIBLE_SAFE;
+                } else { 
+                    if (minefield[row][j_180] != HIDDEN_MINE) {
+                        // if there are adjacent mines,
+                        // change the next square in
+                        // radial line to VISIBLE_SAFE
+                        minefield[row][j_180] = VISIBLE_SAFE;
+                    }
+                    // then end the loop to stop printing the line
+                    endLoop_180 = 1;
+                }
+            }
+            counter_180 = counter_180 - 1; 
+            j_180--;  
+        }
+        
+        // while loop to print 90 degrees line
+        int i_90 = row - 1;
+        int counter_90 = -1;
+        int endLoop_90 = 0;
+        while (i_90 >= 0 && endLoop_90 == 0) {
+            // check adjacent mines of revealed square 
+            int totalMinesSquare_90 = detectMinesSquare(
+            minefield, i_90 , column , 3);
+            if (i_90 + column == row + column + counter_90) {
+                if (totalMinesSquare_90 == 0) { 
+                    // if no adjacent mines, change next square in
+                    // radial line to VISIBLE_SAFE
+                    minefield[i_90][column] = VISIBLE_SAFE;
+                } else {
+                    if (minefield[i_90][column] != HIDDEN_MINE) {
+                        // if there are adjacent mines,
+                        // change the next square in
+                        // radial line to VISIBLE_SAFE
+                        minefield[i_90][column] = VISIBLE_SAFE;
+                    }
+                    // then end the loop to stop printing the line
+                    endLoop_90 = 1;
+                }
+            }
+            counter_90 = counter_90 - 1; 
+            i_90--;  
+        }
+        
+        // while loop to print 270 degrees line
+        int i_270 = row + 1;
+        int counter_270 = 1;
+        int endLoop_270 = 0;
+        while (i_270 < SIZE && endLoop_270 == 0) {
+            // check adjacent mines of revealed square 
+            int totalMinesSquare_270 = detectMinesSquare(
+            minefield, i_270 , column , 3);
+            if (i_270 + column == row + column + counter_270) {
+                if (totalMinesSquare_270 == 0) {
+                    // if no adjacent mines, change next square in
+                    // radial line to VISIBLE_SAFE
+                    minefield[i_270][column] = VISIBLE_SAFE;
+                } else {
+                    if (minefield[i_270][column] != HIDDEN_MINE) {
+                        // if there are adjacent mines,
+                        // change the next square in
+                        // radial line to VISIBLE_SAFE
+                        minefield[i_270][column] = VISIBLE_SAFE;
+                    }
+                    // then end the loop to stop printing the line
+                    endLoop_270 = 1;
+                }
+            }
+            counter_270 = counter_270 + 1; 
+            i_270++;  
+        }
+    } 
+    return returnValue;
+}
+
+// Safe First Turn function 
+// shifts the places of mines down
+// until the reveal function is safe to be used
+// so that the user does not lose on the first turn
+void safeFirstTurn(int minefield[SIZE][SIZE], int row, int column) {
+    while (minefield[row][column] == HIDDEN_MINE) {
+        // run loop if selected row and column is HIDDEN_MINE
+        
+        int j = 0;
+        while (j < SIZE) { // counter to loop number of columns in minefield
+            int tempArray[SIZE];
+            int k = 0;
+            while (k < SIZE) { // counter to loop number of rows in minefield
+                // store entire individual column into a temporary array
+                tempArray[k] = minefield[k][j];
+                k++;
+            }
+            int i = 0;
+            while (i < SIZE) { // counter to loop number of rows in minefield
+                if (i < SIZE - 1) {
+                    // move row values down by one except for
+                    // the value of the last row (SIZE - 1)
+                    minefield[i + 1][j] = tempArray[i];
+                
+                } else if (i == SIZE - 1) {
+                    // shift the values of the last row (SIZE - 1)
+                    // up to the first row (0)
+                    minefield[0][j] = tempArray[SIZE - 1];
+                }
+                i++;
+            }
+            j++;
+        }
+    }
+}
+
