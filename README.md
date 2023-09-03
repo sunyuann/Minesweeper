@@ -1,5 +1,5 @@
 # Minesweeper
-Minesweeper program in C that allows you to set mine locations and play minesweeper with added functionality.
+Minesweeper program written in C that allows you to set mine locations and play minesweeper with added functionality.
 Added functionality includes:
   -Setting number of mines
   -Setting mine locations
